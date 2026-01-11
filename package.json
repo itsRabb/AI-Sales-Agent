@@ -1,0 +1,26 @@
+{
+  "name": "ai-sales-agent",
+  "version": "3.0.0",
+  "description": "Autonomous AI-powered lead generation system with specialized worker/brain architecture",
+  "main": "autonomous-orchestrator.js",
+  "scripts": {
+    "start": "node autonomous-orchestrator.js",
+    "dashboard": "cd dashboard && node server.js",
+    "orchestrator": "node autonomous-orchestrator.js",
+    "brain-m73": "node brain-agent.js M73 6001",
+    "brain-m715q": "node brain-agent.js M715Q 6002",
+    "process": "node lead-processor.js",
+    "batch": "node lead-processor.js batch"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.87.1",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "node-cron": "^3.0.2",
+    "nodemailer": "^7.0.11",
+    "ws": "^8.14.0"
+  },
+  "author": "Your Name",
+  "license": "MIT"
+}

@@ -1,0 +1,17 @@
+# Core API framework
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+python-dotenv
+
+# Web scraping
+beautifulsoup4
+playwright
+
+# HTTP clients
+requests
+supabase
+
+# Logging (optional)
+loguru

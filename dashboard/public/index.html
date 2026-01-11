@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI FLEET COMMAND</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Exo+2:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glow: #00ff88;
+            --glow-alt: #00d4ff;
+            --bg-dark: #0a0a1a;
+            --card-bg: rgba(15, 15, 35, 0.6);
+            --glass: rgba(20, 25, 60, 0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background: radial-gradient(circle at 50% 50%, #16213e 0%, #0f0c29 70%);
+            color: #e0e7ff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-attachment: fixed;
+        }
+
+        /* Animated Background Particles */
+        .particles {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .particle {
+            position: absolute;
+            width: 4px; height: 4px;
+            background: var(--glow);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--glow);
+            animation: float 15s infinite linear;
+        }
+        @keyframes float {
+            0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px) translateX(100px); opacity: 0; }
+        }
+
+        .header {
+            text-align: center;
+            padding: 3rem 1rem 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, #00ff88, #00d4ff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 40px rgba(0, 255, 136, 0.7);
+            animation: titleGlow 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { filter: hue-rotate(0deg) brightness(1); }
+            to { filter: hue-rotate(60deg) brightness(1.3); }
+        }
+
+        .subtitle {
+            color: #88ffcc;
+            font-size: 1.3rem;
+            margin-top: 10px;
+            font-weight: 300;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .subtitle span { opacity: 0.8; }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 20px;
+            padding: 1.8rem;
+            text-align: center;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,255,136,0.1), transparent);
+            animation: shine 4s infinite;
+        }
+
+        @keyframes shine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .stat-card:hover {
+            transform: translateY(-12px) scale(1.03);
+            box-shadow: 0 20px 50px rgba(0, 255, 136, 0.4);
+            border-color: var(--glow);
+        }
+
+        .stat-card .value {
+            font-size: 3.2rem;
+            font-weight: 900;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--glow);
+            text-shadow: 0 0 20px var(--glow);
+        }
+
+        .stat-card .label {
+            margin-top: 8px;
+            font-size: 1rem;
+            color: #a0d8ef;
+            letter-spacing: 2px;
+        }
+
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .agent-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .agent-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 24px;
+            padding: 3px;
+            background: linear-gradient(45deg, var(--agent-color), transparent, var(--agent-color));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+
+        .agent-card:hover::before {
+            opacity: 1;
+        }
+
+        .agent-card:hover {
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: 0 30px 80px rgba(0, 255, 136, 0.35);
+        }
+
+        .agent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .agent-info {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+        }
+
+        .agent-icon {
+            font-size: 4.5rem;
+            filter: drop-shadow(0 0 20px var(--agent-color));
+            transition: transform 0.4s;
+        }
+
+        .agent-card:hover .agent-icon {
+            transform: rotate(12deg) scale(1.1);
+        }
+
+        .agent-details h3 {
+            font-size: 1.6rem;
+            color: var(--agent-color);
+            font-weight: 700;
+            text-shadow: 0 0 15px var(--agent-color);
+        }
+
+        .agent-type {
+            color: #88aaff;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .status-badge {
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            backdrop-filter: blur(10px);
+            animation: pulseGlow 3s infinite;
+        }
+
+        .status-online    { background: rgba(16,185,129,0.25); color: #10b981; border: 1px solid #10b981; }
+        .status-offline   { background: rgba(239,68,68,0.25);  color: #ef4444; border: 1px solid #ef4444; }
+        .status-degraded  { background: rgba(245,158,11,0.25); color: #f59e0b; border: 1px solid #f59e0b; }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 10px currentColor; }
+            50% { box-shadow: 0 0 25px currentColor; }
+        }
+
+        .agent-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .metric {
+            background: rgba(0,0,0,0.4);
+            padding: 1rem;
+            border-radius: 14px;
+            border-left: 4px solid var(--agent-color);
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #fff;
+            margin-top: 4px;
+        }
+
+        .agent-controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.4s;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .btn-restart { background: linear-gradient(45deg, #3b82f6, #60a5fa); color: #fff; }
+        .btn-stop    { background: linear-gradient(45deg, #ef4444, #f87171); color: #fff; }
+        .btn-logs    { background: linear-gradient(45deg, #8b5cf6, #a78bfa); color: #fff; }
+
+        .btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .activity-feed {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid rgba(0,255,136,0.2);
+        }
+
+        .activity-feed h2 {
+            color: var(--glow);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            text-shadow: 0 0 15px var(--glow);
+        }
+
+        .activity-item {
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            border-left: 4px solid var(--glow);
+            font-size: 0.95rem;
+        }
+
+        .activity-time {
+            color: #888;
+            font-size: 0.8rem;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            margin: 5% auto;
+            padding: 0;
+            border: 2px solid var(--glow);
+            border-radius: 15px;
+            width: 80%;
+            max-width: 900px;
+            max-height: 80vh;
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.5);
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 212, 255, 0.2));
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--glow);
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--glow);
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .close {
+            color: #fff;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            line-height: 20px;
+        }
+
+        .close:hover {
+            color: var(--glow);
+            transform: scale(1.2);
+        }
+
+        .modal-body {
+            padding: 30px;
+            max-height: calc(80vh - 140px);
+            overflow-y: auto;
+        }
+
+        .modal-body pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 8px;
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .log-line {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-line:last-child {
+            border-bottom: none;
+        }
+
+        .log-error {
+            color: #ff4444;
+        }
+
+        .log-warning {
+            color: #ffaa00;
+        }
+
+        .log-info {
+            color: #00d4ff;
+        }
+
+        .log-success {
+            color: #00ff88;
+        }
+
+        /* Toggle Switch Styles */
+        .feature-toggles {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            margin-bottom: 2rem;
+        }
+
+        .feature-toggles h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--glow);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .toggle-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .toggle-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .toggle-label {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toggle-label strong {
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .toggle-label span {
+            color: #aaa;
+            font-size: 0.85rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #555;
+            transition: 0.4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--glow);
+            box-shadow: 0 0 15px var(--glow);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Fleet Control Panel */
+        .fleet-control {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .fleet-control h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--glow-alt);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .fleet-status {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.3);
+            font-size: 1.1rem;
+        }
+
+        .fleet-status.running {
+            color: var(--glow);
+            border: 1px solid var(--glow);
+        }
+
+        .fleet-status.stopped {
+            color: #888;
+            border: 1px solid #555;
+        }
+
+        .btn-fleet {
+            padding: 18px 40px;
+            border: none;
+            border-radius: 16px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.4s;
+            letter-spacing: 2px;
+            font-family: 'Orbitron', sans-serif;
+            min-width: 250px;
+        }
+
+        .btn-fleet-start {
+            background: linear-gradient(45deg, #00ff88, #00d4ff);
+            color: #000;
+        }
+
+        .btn-fleet-stop {
+            background: linear-gradient(45deg, #ff4444, #ff8844);
+            color: #fff;
+        }
+
+        .btn-fleet:hover {
+            transform: translateY(-6px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(0,255,136,0.5);
+        }
+
+        .btn-fleet:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: bold;
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid;
+        }
+
+        .connection-online {
+            background: rgba(16,185,129,0.3);
+            color: #10b981;
+            border-color: #10b981;
+        }
+
+        .connection-offline {
+            background: rgba(239,68,68,0.3);
+            color: #ef4444;
+            border-color: #ef4444;
+        }
+
+        .pulse-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 1.5s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2.8rem; }
+            .agents-grid { grid-template-columns: 1fr; }
+            .stats-bar { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="particles" id="particles"></div>
+
+    <div class="connection-status connection-offline" id="connectionStatus">
+        <div class="pulse-dot"></div>
+        <span>Connecting to Fleet...</span>
+    </div>
+
+    <div class="header">
+        <h1> ̶⚛🇦🇮 FLEET COMMAND </h1>
+        <div class="subtitle"><span>AI SALES AGENT CONTROL CENTER</span></div>
+    </div>
+
+    <div class="container">
+        <!-- Feature Toggles -->
+        <div class="feature-toggles">
+            <h3>⚙️ FEATURE CONTROLS</h3>
+            
+            <div class="toggle-item">
+                <div class="toggle-label">
+                    <strong>📧 Email Sending (M73 Brain)</strong>
+                    <span>Enable M73 to generate and send personalized emails to qualified leads via Hostinger SMTP</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="emailToggle" onchange="toggleEmail(this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-item">
+                <div class="toggle-label">
+                    <strong>🔒 Proxy Rotation (RiPis)</strong>
+                    <span>Route all scraping requests through rotating proxies to avoid rate limits and blocks</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="proxyToggle" onchange="toggleProxy(this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-item">
+                <div class="toggle-label">
+                    <strong>💼 LinkedIn Enrichment</strong>
+                    <span>After scraping realtor leads, search Google for their LinkedIn profile and extract additional contact info</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="linkedinToggle" onchange="toggleLinkedIn(this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Fleet Control Panel -->
+        <div class="fleet-control">
+            <h3>🎯 FLEET CONTROL</h3>
+            <div class="fleet-status stopped" id="fleetStatus">
+                ⏸️ Fleet Idle - Waiting for initialization
+            </div>
+            <button class="btn-fleet btn-fleet-start" id="fleetControlBtn" onclick="toggleFleet()">
+                🚀 INITIALIZE FLEET
+            </button>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-card"><div class="value" id="leadsProcessed">0</div><div class="label">Leads Processed</div></div>
+            <div class="stat-card"><div class="value" id="emailsSent">0</div><div class="label">Emails Sent</div></div>
+            <div class="stat-card"><div class="value" id="socialPosts">0</div><div class="label">Social Posts</div></div>
+            <div class="stat-card"><div class="value" id="uptime">00:00:00</div><div class="label">Fleet Uptime</div></div>
+            <div class="stat-card"><div class="value" id="onlineAgents">0/0</div><div class="label">Agents Online</div></div>
+        </div>
+
+        <div id="agentsGrid" class="agents-grid loading">
+            <div style="text-align:center; padding:4rem; font-size:2rem; opacity:0.6;">
+                Initializing neural fleet...
+            </div>
+        </div>
+
+        <div class="activity-feed">
+            <h2>Live Activity Stream</h2>
+            <div id="activityLog"></div>
+        </div>
+    </div>
+
+    <script>
+        // Particle Background
+        const particlesContainer = document.getElementById('particles');
+        for(let i = 0; i < 40; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + 'vw';
+            p.style.animationDelay = Math.random() * 15 + 's';
+            p.style.animationDuration = (Math.random() * 20 + 15) + 's';
+            particlesContainer.appendChild(p);
+        }
+
+        // Your existing JS stays 100% functional — only visual upgrades!
+        // Just paste your full <script> from before here (it works perfectly with the new design)
+    </script>
+
+    <script>
+        // WebSocket connection
+        let ws;
+        let orchestratorWs;
+        let reconnectInterval;
+        let orchestratorReconnectInterval;
+        const activityLog = [];
+        const MAX_LOG_ITEMS = 50;
+
+        function connect() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            // Connect to dashboard server on port 4000 for agent status
+            const wsUrl = `${protocol}//${window.location.hostname}:${window.location.port}`;
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                console.log('Connected to command center');
+                updateConnectionStatus(true);
+                addActivity('Connected to command center', 'success');
+                clearInterval(reconnectInterval);
+            };
+
+            ws.onclose = () => {
+                console.log('Disconnected from command center');
+                updateConnectionStatus(false);
+                addActivity('Connection lost - attempting reconnect...', 'error');
+                
+                // Auto-reconnect
+                reconnectInterval = setInterval(() => {
+                    console.log('Reconnecting...');
+                    connect();
+                }, 5000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                handleMessage(message);
+            };
+        }
+
+        // Connect to orchestrator for live activity feed
+        function connectToOrchestrator() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.hostname}:5000`;
+
+            try {
+                orchestratorWs = new WebSocket(wsUrl);
+
+                orchestratorWs.onopen = () => {
+                    console.log('Connected to Orchestrator activity feed');
+                    addActivity('Orchestrator feed connected', 'success');
+                    clearInterval(orchestratorReconnectInterval);
+                };
+
+                orchestratorWs.onclose = () => {
+                    console.log('Orchestrator disconnected');
+                    
+                    // Auto-reconnect to orchestrator
+                    orchestratorReconnectInterval = setInterval(() => {
+                        console.log('Reconnecting to orchestrator...');
+                        connectToOrchestrator();
+                    }, 10000);
+                };
+
+                orchestratorWs.onerror = (error) => {
+                    console.error('Orchestrator WebSocket error:', error);
+                };
+
+                orchestratorWs.onmessage = (event) => {
+                    const message = JSON.parse(event.data);
+                    // Handle orchestrator-specific messages
+                    if (message.type === 'activity' || message.activity) {
+                        addActivity(message.activity || message.message, 'info');
+                        
+                        if (message.details && Object.keys(message.details).length > 0) {
+                            const detailStr = Object.entries(message.details)
+                                .map(([k, v]) => `${k}: ${v}`)
+                                .join(' | ');
+                            addActivity(`   → ${detailStr}`, 'detail');
+                        }
+                    }
+                };
+            } catch (error) {
+                console.error('Could not connect to orchestrator:', error);
+            }
+        }
+
+        function handleMessage(message) {
+            switch (message.type) {
+                case 'initial_state':
+                    renderAgents(message.data.agents);
+                    updateMetrics(message.data.metrics);
+                    break;
+                case 'status_update':
+                    renderAgents(message.data.agents);
+                    break;
+                case 'metrics_update':
+                    updateMetrics(message.data);
+                    break;
+                case 'alert':
+                    addActivity(message.data.message, 'alert');
+                    break;
+                case 'control_response':
+                    addActivity(message.data.message, 
+                        message.data.success ? 'success' : 'error');
+                    break;
+            }
+        }
+
+        function renderAgents(agents) {
+            const grid = document.getElementById('agentsGrid');
+            grid.className = 'agents-grid';
+            
+            let onlineCount = 0;
+            
+            grid.innerHTML = agents.map(agent => {
+                const isOnline = agent.status === 'online';
+                if (isOnline) onlineCount++;
+                
+                const lastCheck = agent.lastCheck 
+                    ? new Date(agent.lastCheck).toLocaleTimeString() 
+                    : 'Never';
+                
+                const responseTime = agent.responseTime 
+                    ? `${agent.responseTime}ms` 
+                    : 'N/A';
+
+                return `
+                    <div class="agent-card" style="--agent-color: ${agent.color}">
+                        <div class="agent-header">
+                            <div class="agent-info">
+                                <div class="agent-icon">${agent.icon}</div>
+                                <div class="agent-details">
+                                    <h3>${agent.name}</h3>
+                                    <div class="agent-type">${agent.type}</div>
+                                </div>
+                            </div>
+                            <div class="status-badge status-${agent.status}">
+                                ${agent.status}
+                            </div>
+                        </div>
+                        
+                        <div class="agent-metrics">
+                            <div class="metric">
+                                <div class="metric-label">Last Check</div>
+                                <div class="metric-value">${lastCheck}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Response Time</div>
+                                <div class="metric-value">${responseTime}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Failures</div>
+                                <div class="metric-value">${agent.consecutiveFailures}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">URL</div>
+                                <div class="metric-value" style="font-size: 0.8em; word-break: break-all;">
+                                    ${agent.url}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="agent-controls">
+                            <button class="btn btn-restart" onclick="controlAgent('${agent.id}', 'restart')">
+                                🔄 Restart
+                            </button>
+                            <button class="btn btn-stop" onclick="controlAgent('${agent.id}', 'stop')">
+                                ⏹️ Stop
+                            </button>
+                            <button class="btn btn-logs" onclick="viewLogs('${agent.id}')">
+                                📋 Logs
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Update online count
+            document.getElementById('onlineAgents').textContent = 
+                `${onlineCount}/${agents.length}`;
+        }
+
+        function updateMetrics(metrics) {
+            document.getElementById('leadsProcessed').textContent = 
+                metrics.totalLeadsProcessed.toLocaleString();
+            document.getElementById('emailsSent').textContent = 
+                metrics.totalEmailsSent.toLocaleString();
+            document.getElementById('socialPosts').textContent = 
+                metrics.totalSocialPosts.toLocaleString();
+            
+            // Update uptime
+            const uptime = Date.now() - metrics.uptime;
+            const hours = Math.floor(uptime / 3600000);
+            const minutes = Math.floor((uptime % 3600000) / 60000);
+            const seconds = Math.floor((uptime % 60000) / 1000);
+            document.getElementById('uptime').textContent = 
+                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function updateConnectionStatus(connected) {
+            const statusEl = document.getElementById('connectionStatus');
+            if (connected) {
+                statusEl.className = 'connection-status connection-online';
+                statusEl.innerHTML = '<div class="pulse-dot"></div><span>Connected</span>';
+            } else {
+                statusEl.className = 'connection-status connection-offline';
+                statusEl.innerHTML = '<div class="pulse-dot"></div><span>Disconnected</span>';
+            }
+        }
+
+        function controlAgent(agentId, action) {
+            const confirmMessages = {
+                restart: 'Are you sure you want to restart this agent?',
+                stop: 'Are you sure you want to stop this agent?'
+            };
+
+            if (confirmMessages[action] && !confirm(confirmMessages[action])) {
+                return;
+            }
+
+            addActivity(`Sending ${action} command to ${agentId}...`, 'info');
+
+            // Use HTTP API instead of WebSocket for more reliable control
+            fetch(`/api/agent/${agentId}/${action}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    addActivity(`✅ ${action} command sent successfully`, 'success');
+                } else {
+                    addActivity(`❌ ${action} failed: ${data.message || data.error}`, 'error');
+                }
+            })
+            .catch(err => {
+                addActivity(`❌ Error: ${err.message}`, 'error');
+            });
+        }
+
+        function viewLogs(agentId) {
+            console.log('viewLogs called for:', agentId);
+            
+            const modal = document.getElementById('logModal');
+            const logContent = document.getElementById('logContent');
+            
+            // Show modal
+            modal.style.display = 'block';
+            logContent.textContent = 'Loading logs...';
+            
+            addActivity(`📋 Loading logs for ${agentId}...`, 'info');
+            
+            // Fetch logs
+            fetch(`/api/agent/${agentId}/logs`)
+                .then(res => res.json())
+                .then(data => {
+                    console.log('Logs received:', data);
+                    
+                    if (data.logs && Array.isArray(data.logs)) {
+                        // Format logs with colors
+                        logContent.innerHTML = data.logs.map(log => {
+                            let className = 'log-info';
+                            if (log.includes('ERROR') || log.includes('❌')) className = 'log-error';
+                            else if (log.includes('WARN') || log.includes('⚠️')) className = 'log-warning';
+                            else if (log.includes('SUCCESS') || log.includes('✅')) className = 'log-success';
+                            
+                            return `<div class="log-line ${className}">${log}</div>`;
+                        }).join('');
+                        
+                        addActivity(`✅ Loaded ${data.logs.length} log entries`, 'success');
+                    } else if (data.error) {
+                        logContent.innerHTML = `<div class="log-error">Error: ${data.error}\n${data.message || ''}</div>`;
+                        addActivity(`❌ Error loading logs: ${data.error}`, 'error');
+                    } else {
+                        logContent.textContent = JSON.stringify(data, null, 2);
+                    }
+                })
+                .catch(err => {
+                    console.error('Log fetch error:', err);
+                    logContent.innerHTML = `<div class="log-error">Could not fetch logs: ${err.message}</div>`;
+                    addActivity(`❌ Failed to load logs: ${err.message}`, 'error');
+                });
+        }
+
+        function closeLogModal() {
+            document.getElementById('logModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('logModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Feature Toggles
+        let linkedInEnabled = false;
+        let emailSendingEnabled = false;
+        let proxyEnabled = false;
+
+        function toggleLinkedIn(enabled) {
+            linkedInEnabled = enabled;
+            localStorage.setItem('linkedInEnabled', enabled);
+            
+            fetch('/api/config/linkedin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled: enabled })
+            })
+            .then(res => res.json())
+            .then(data => {
+                addActivity(`LinkedIn enrichment ${enabled ? 'ENABLED ✅' : 'DISABLED ⏸️'}`, enabled ? 'success' : 'info');
+            })
+            .catch(err => {
+                console.error('Failed to update LinkedIn setting:', err);
+            });
+        }
+
+        function toggleEmail(enabled) {
+            emailSendingEnabled = enabled;
+            localStorage.setItem('emailSendingEnabled', enabled);
+            
+            fetch('/api/config/email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled: enabled })
+            })
+            .then(res => res.json())
+            .then(data => {
+                addActivity(`Email sending ${enabled ? 'ENABLED ✅' : 'DISABLED ⏸️'}`, enabled ? 'success' : 'info');
+            })
+            .catch(err => {
+                console.error('Failed to update email setting:', err);
+                addActivity('Error toggling email sending', 'error');
+            });
+        }
+
+        function toggleProxy(enabled) {
+            proxyEnabled = enabled;
+            localStorage.setItem('proxyEnabled', enabled);
+            
+            fetch('/api/config/proxy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled: enabled })
+            })
+            .then(res => res.json())
+            .then(data => {
+                addActivity(`Proxy rotation ${enabled ? 'ENABLED ✅' : 'DISABLED ⏸️'}`, enabled ? 'success' : 'info');
+            })
+            .catch(err => {
+                console.error('Failed to update proxy setting:', err);
+                addActivity('Error toggling proxy', 'error');
+            });
+        }
+
+        // Fleet Control
+        let fleetRunning = false;
+
+        async function toggleFleet() {
+            const btn = document.getElementById('fleetControlBtn');
+            const status = document.getElementById('fleetStatus');
+            
+            btn.disabled = true;
+            
+            try {
+                const endpoint = fleetRunning ? '/api/pause' : '/api/resume';
+                const orchestratorUrl = 'http://localhost:5000';
+                
+                const response = await fetch(orchestratorUrl + endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.status === 'running' || data.status === 'already_running') {
+                    fleetRunning = true;
+                    btn.textContent = '⏸️ STOP FLEET';
+                    btn.className = 'btn-fleet btn-fleet-stop';
+                    status.textContent = '🚀 Fleet Running - Processing Leads';
+                    status.className = 'fleet-status running';
+                    addActivity('🚀 FLEET INITIALIZED - Autonomous operations started', 'success');
+                } else if (data.status === 'paused' || data.status === 'already_paused') {
+                    fleetRunning = false;
+                    btn.textContent = '🚀 START FLEET';
+                    btn.className = 'btn-fleet btn-fleet-start';
+                    status.textContent = '⏸️ Fleet Paused';
+                    status.className = 'fleet-status stopped';
+                    addActivity('⏸️ Fleet paused - All operations stopped', 'info');
+                }
+            } catch (error) {
+                console.error('Fleet control error:', error);
+                
+                // Better error messaging
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    addActivity('❌ Cannot connect to orchestrator - Make sure START.bat is running on localhost:5000', 'error');
+                } else {
+                    addActivity(`❌ Fleet control error: ${error.message}`, 'error');
+                }
+            }
+            
+            btn.disabled = false;
+        }
+
+        // Check fleet status on load
+        async function checkFleetStatus() {
+            try {
+                const response = await fetch('http://localhost:5000/health');
+                const data = await response.json();
+                
+                if (data.fleetRunning) {
+                    fleetRunning = true;
+                    const btn = document.getElementById('fleetControlBtn');
+                    const status = document.getElementById('fleetStatus');
+                    btn.textContent = '⏸️ STOP FLEET';
+                    btn.className = 'btn-fleet btn-fleet-stop';
+                    status.textContent = '🚀 Fleet Running - Processing Leads';
+                    status.className = 'fleet-status running';
+                    addActivity('✅ Fleet is already running', 'success');
+                } else {
+                    addActivity('⚠️ Fleet is idle - Click INITIALIZE FLEET to start', 'info');
+                }
+            } catch (error) {
+                // Orchestrator not available yet
+                addActivity('❌ Orchestrator offline - Start it with START.bat', 'error');
+                console.log('Orchestrator not ready yet');
+            }
+        }
+
+        // Load settings on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedLinkedIn = localStorage.getItem('linkedInEnabled');
+            if (savedLinkedIn !== null) {
+                linkedInEnabled = savedLinkedIn === 'true';
+                const toggle = document.getElementById('linkedinToggle');
+                if (toggle) toggle.checked = linkedInEnabled;
+            }
+
+            const savedEmail = localStorage.getItem('emailSendingEnabled');
+            if (savedEmail !== null) {
+                emailSendingEnabled = savedEmail === 'true';
+                const toggle = document.getElementById('emailToggle');
+                if (toggle) toggle.checked = emailSendingEnabled;
+            }
+
+            const savedProxy = localStorage.getItem('proxyEnabled');
+            if (savedProxy !== null) {
+                proxyEnabled = savedProxy === 'true';
+                const toggle = document.getElementById('proxyToggle');
+                if (toggle) toggle.checked = proxyEnabled;
+            }
+            
+            // Check fleet status
+            checkFleetStatus();
+            
+            // Fetch initial agent status from dashboard server
+            fetchAgentStatus();
+        });
+
+        // Fetch agent status from dashboard server API
+        async function fetchAgentStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                if (data.agents) {
+                    renderAgents(data.agents);
+                }
+                
+                if (data.metrics) {
+                    updateMetrics(data.metrics);
+                }
+            } catch (error) {
+                console.error('Failed to fetch agent status:', error);
+                setTimeout(fetchAgentStatus, 5000); // Retry in 5 seconds
+            }
+        }
+
+
+        function addActivity(message, type = 'info') {
+            const now = new Date().toLocaleTimeString();
+            activityLog.unshift({ time: now, message, type });
+            
+            // Limit log size
+            if (activityLog.length > MAX_LOG_ITEMS) {
+                activityLog.pop();
+            }
+
+            renderActivityLog();
+        }
+
+        function renderActivityLog() {
+            const logEl = document.getElementById('activityLog');
+            logEl.innerHTML = activityLog.map(item => `
+                <div class="activity-item">
+                    <div class="activity-time">${item.time}</div>
+                    ${item.message}
+                </div>
+            `).join('');
+        }
+
+        // Initialize connections
+        connect(); // Connect to dashboard server WebSocket
+        connectToOrchestrator(); // Connect to orchestrator activity feed
+
+        // Update metrics and status every 5 seconds
+        setInterval(() => {
+            fetch('/api/status')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.agents) {
+                        renderAgents(data.agents);
+                    }
+                    if (data.metrics) {
+                        updateMetrics(data.metrics);
+                    }
+                })
+                .catch(err => console.error('Status update failed:', err));
+        }, 5000);
+    </script>
+
+    <!-- Log Modal -->
+    <div id="logModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📋 Agent Logs</h2>
+                <span class="close" onclick="closeLogModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <pre id="logContent">Loading logs...</pre>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

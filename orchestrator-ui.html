@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORCHESTRATOR CONTROL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Exo+2:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --glow: #00ff88;
+            --glow-alt: #00d4ff;
+            --bg-dark: #0a0a1a;
+            --card-bg: rgba(15, 15, 35, 0.6);
+            --glass: rgba(20, 25, 60, 0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background: radial-gradient(circle at 50% 50%, #16213e 0%, #0f0c29 70%);
+            color: #e0e7ff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-attachment: fixed;
+        }
+
+        /* Animated Background Particles */
+        .particles {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .particle {
+            position: absolute;
+            width: 4px; height: 4px;
+            background: var(--glow);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--glow);
+            animation: float 15s infinite linear;
+        }
+        @keyframes float {
+            0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px) translateX(100px); opacity: 0; }
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: bold;
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid;
+        }
+
+        .connection-online {
+            background: rgba(16,185,129,0.3);
+            color: #10b981;
+            border-color: #10b981;
+        }
+
+        .connection-offline {
+            background: rgba(239,68,68,0.3);
+            color: #ef4444;
+            border-color: #ef4444;
+        }
+
+        .pulse-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .header {
+            text-align: center;
+            padding: 3rem 1rem 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, #00ff88, #00d4ff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 40px rgba(0, 255, 136, 0.7);
+            animation: titleGlow 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { filter: hue-rotate(0deg) brightness(1); }
+            to { filter: hue-rotate(60deg) brightness(1.3); }
+        }
+
+        .subtitle {
+            color: #88ffcc;
+            font-size: 1.3rem;
+            margin-top: 10px;
+            font-weight: 300;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .subtitle span { opacity: 0.8; }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 12px 35px;
+            background: rgba(16, 185, 129, 0.3);
+            border: 2px solid #10b981;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: pulseGlow 3s infinite;
+        }
+        
+        .status-badge.exploring {
+            background: rgba(245, 158, 11, 0.3);
+            border-color: #f59e0b;
+            color: #f59e0b;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px currentColor; }
+            50% { box-shadow: 0 0 35px currentColor; }
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 20px;
+            padding: 1.8rem;
+            text-align: center;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,255,136,0.1), transparent);
+            animation: shine 4s infinite;
+        }
+
+        @keyframes shine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .stat-card:hover {
+            transform: translateY(-12px) scale(1.03);
+            box-shadow: 0 20px 50px rgba(0, 255, 136, 0.4);
+            border-color: var(--glow);
+        }
+
+        .stat-card .value {
+            font-size: 3.2rem;
+            font-weight: 900;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--glow);
+            text-shadow: 0 0 20px var(--glow);
+        }
+
+        .stat-card .label {
+            margin-top: 8px;
+            font-size: 1rem;
+            color: #a0d8ef;
+            letter-spacing: 2px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 24px;
+            padding: 3px;
+            background: linear-gradient(45deg, var(--glow), transparent, var(--glow-alt));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(0, 255, 136, 0.3);
+        }
+        
+        .card h2 {
+            font-size: 1.6rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--glow);
+            font-family: 'Orbitron', sans-serif;
+            text-shadow: 0 0 15px var(--glow);
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--glow);
+        }
+        
+        .metric-label {
+            font-size: 1rem;
+            opacity: 0.9;
+            color: #a0d8ef;
+        }
+        
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--glow);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        .activity-item {
+            padding: 14px;
+            background: rgba(0,0,0,0.3);
+            border-left: 4px solid #10b981;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .activity-item:hover {
+            background: rgba(0,0,0,0.4);
+            transform: translateX(5px);
+        }
+        
+        .activity-item.warning {
+            border-left-color: #f59e0b;
+        }
+        
+        .activity-item.error {
+            border-left-color: #ef4444;
+        }
+        
+        .activity-time {
+            opacity: 0.7;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            color: #88aaff;
+        }
+        
+        .activity-item.warning {
+            border-left-color: #f59e0b;
+        }
+        
+        .activity-item.error {
+            border-left-color: #ef4444;
+        }
+        
+        .activity-time {
+            opacity: 0.7;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .keyword-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .keyword-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .keyword-name {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+        
+        .keyword-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+        }
+        
+        .success-rate {
+            padding: 4px 12px;
+            background: rgba(16, 185, 129, 0.3);
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .success-rate.low {
+            background: rgba(239, 68, 68, 0.3);
+        }
+        
+        .success-rate.medium {
+            background: rgba(245, 158, 11, 0.3);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-pause {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .btn-resume {
+            background: #10b981;
+            color: white;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        /* Proxy Management Styles */
+        .proxy-controls {
+            margin-bottom: 20px;
+        }
+        
+        .proxy-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .proxy-status span:first-child {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255,255,255,0.2);
+            transition: 0.4s;
+            border-radius: 30px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #10b981;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+        
+        .proxy-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-item {
+            flex: 1;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-label {
+            display: block;
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .stat-success {
+            color: #10b981;
+        }
+        
+        .stat-error {
+            color: #ef4444;
+        }
+        
+        .proxy-add {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .proxy-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .proxy-input::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .proxy-input:focus {
+            outline: none;
+            border-color: #10b981;
+        }
+        
+        .btn-add {
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+        }
+        
+        .btn-test {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 20px;
+        }
+        
+        .proxy-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .proxy-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .proxy-item.working {
+            border-left-color: #10b981;
+        }
+        
+        .proxy-item.failed {
+            border-left-color: #ef4444;
+        }
+        
+        .proxy-url {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            word-break: break-all;
+        }
+        
+        .proxy-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .btn-small:hover {
+            opacity: 0.8;
+        }
+        
+        .btn-remove {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-test-single {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+            transition: width 0.3s;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 10px;
+        }
+        
+        .location-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .location-name {
+            font-weight: bold;
+        }
+        
+        .location-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧠 AUTONOMOUS ORCHESTRATOR</h1>
+        <p>Self-Learning Lead Generation System</p>
+        <div class="status-badge" id="strategyBadge">Strategy: Loading...</div>
+    </div>
+
+    <div class="grid">
+        <!-- Real-Time Metrics -->
+        <div class="card">
+            <h2>📊 Performance Metrics</h2>
+            <div class="metric">
+                <span class="metric-label">Total Searches</span>
+                <span class="metric-value" id="totalSearches">0</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Leads Found</span>
+                <span class="metric-value" id="totalLeads">0</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Quality Leads</span>
+                <span class="metric-value" id="qualityLeads">0</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Success Rate</span>
+                <span class="metric-value" id="successRate">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="successProgress" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Current Activity -->
+        <div class="card">
+            <h2>⚡ Current Activity</h2>
+            <div id="currentActivity" style="min-height: 200px;">
+                <div class="activity-item">
+                    <div class="activity-time">Waiting for updates...</div>
+                    System is starting up...
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Keywords Performance -->
+        <div class="card">
+            <h2>🔍 Top Search Keywords</h2>
+            <div class="keyword-list" id="keywordList">
+                Loading keywords...
+            </div>
+        </div>
+
+        <!-- Target Locations -->
+        <div class="card">
+            <h2>🗺️ Target Locations</h2>
+            <div class="keyword-list" id="locationList">
+                Loading locations...
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid">
+        <div class="card">
+            <h2>📈 Success Rate Over Time</h2>
+            <div class="chart-container">
+                <canvas id="successChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🎯 Leads by Source</h2>
+            <div class="chart-container">
+                <canvas id="sourceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="card">
+        <h2>⚙️ Controls</h2>
+        <div class="controls">
+            <button class="btn btn-pause" onclick="pauseSystem()">⏸️ Pause System</button>
+            <button class="btn btn-resume" onclick="resumeSystem()">▶️ Resume System</button>
+        </div>
+    </div>
+
+    <!-- Proxy Management -->
+    <div class="card">
+        <h2>🔒 Proxy Management</h2>
+        
+        <div class="proxy-controls">
+            <div class="proxy-status">
+                <span id="proxyStatusText">Proxies Disabled</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="proxyToggle" onchange="toggleProxies()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            
+            <div class="proxy-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Total Proxies:</span>
+                    <span class="stat-value" id="proxyTotal">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Working:</span>
+                    <span class="stat-value stat-success" id="proxyWorking">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Failed:</span>
+                    <span class="stat-value stat-error" id="proxyFailed">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="proxy-add">
+            <input 
+                type="text" 
+                id="proxyInput" 
+                placeholder="socks5://user:pass@host:port or http://host:port"
+                class="proxy-input"
+            >
+            <button class="btn btn-add" onclick="addProxy()">➕ Add Proxy</button>
+            <button class="btn btn-test" onclick="testAllProxies()">🔍 Test All</button>
+        </div>
+
+        <div class="proxy-list" id="proxyList">
+            <!-- Proxies will be listed here -->
+        </div>
+    </div>
+
+    <script>
+        let learningData = {};
+        let activityLog = [];
+        let successHistory = [];
+        let successChart, sourceChart;
+
+        // Initialize charts
+        function initCharts() {
+            const successCtx = document.getElementById('successChart').getContext('2d');
+            successChart = new Chart(successCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Success Rate %',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { color: '#fff' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#fff' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
+
+            const sourceCtx = document.getElementById('sourceChart').getContext('2d');
+            sourceChart = new Chart(sourceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['ChicagoRealtor', 'Zillow', 'Realtor.com', 'LinkedIn', 'Redfin'],
+                    datasets: [{
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: [
+                            '#8b5cf6',  // Purple for Chicago
+                            '#3b82f6',  // Blue
+                            '#10b981',  // Green
+                            '#f59e0b',  // Orange
+                            '#ef4444'   // Red
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#fff' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Fetch learning data
+        async function fetchLearningData() {
+            try {
+                const response = await fetch('/api/learning-data');
+                learningData = await response.json();
+                updateUI();
+            } catch (error) {
+                console.error('Failed to fetch learning data:', error);
+            }
+        }
+
+        // Fetch real-time leads by source from Airtable
+        async function fetchLeadsBySource() {
+            try {
+                const response = await fetch('/api/leads-by-source');
+                const counts = await response.json();
+                
+                // Update source chart with real Airtable counts
+                if (sourceChart && counts) {
+                    sourceChart.data.datasets[0].data = [
+                        counts['chicagorealtor.com'] || 0,
+                        counts['zillow.com'] || 0,
+                        counts['realtor.com'] || 0,
+                        counts['linkedin'] || 0,
+                        counts['redfin.com'] || 0
+                    ];
+                    sourceChart.update();
+                }
+            } catch (error) {
+                console.error('Failed to fetch leads by source:', error);
+            }
+        }
+
+        // Update UI
+        function updateUI() {
+            // Update metrics
+            const metrics = learningData.metrics || {};
+            document.getElementById('totalSearches').textContent = metrics.totalSearches || 0;
+            document.getElementById('totalLeads').textContent = metrics.totalLeadsFound || 0;
+            document.getElementById('qualityLeads').textContent = metrics.totalLeadsScored || 0;
+            
+            const successRate = metrics.totalSearches > 0 
+                ? ((metrics.totalEmailsSent / metrics.totalSearches) * 100).toFixed(1)
+                : 0;
+            document.getElementById('successRate').textContent = successRate + '%';
+            document.getElementById('successProgress').style.width = successRate + '%';
+
+            // Update strategy badge
+            const badge = document.getElementById('strategyBadge');
+            badge.textContent = `Strategy: ${metrics.currentStrategy || 'Exploration'}`.toUpperCase();
+            badge.className = 'status-badge ' + (metrics.currentStrategy === 'exploration' ? 'exploring' : '');
+
+            // Update keywords
+            if (learningData.searchKeywords) {
+                const sorted = [...learningData.searchKeywords]
+                    .sort((a, b) => b.successRate - a.successRate);
+                
+                document.getElementById('keywordList').innerHTML = sorted.map(kw => {
+                    const rate = (kw.successRate * 100).toFixed(1);
+                    const rateClass = rate > 50 ? '' : rate > 25 ? 'medium' : 'low';
+                    return `
+                        <div class="keyword-item">
+                            <div class="keyword-name">"${kw.keyword}"</div>
+                            <div class="keyword-stats">
+                                <span class="success-rate ${rateClass}">${rate}%</span>
+                                <span>${kw.timesUsed} uses</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Update locations
+            if (learningData.targetLocations) {
+                const sorted = [...learningData.targetLocations]
+                    .sort((a, b) => b.leadsFound - a.leadsFound);
+                
+                document.getElementById('locationList').innerHTML = sorted.map(loc => `
+                    <div class="location-item">
+                        <div class="location-name">${loc.city}</div>
+                        <div class="location-stats">
+                            <span>🎯 Priority: ${loc.priority}</span>
+                            <span>📊 ${loc.leadsFound} leads</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Update success chart
+            if (metrics.totalSearches > 0) {
+                successHistory.push({
+                    time: new Date().toLocaleTimeString(),
+                    rate: parseFloat(successRate)
+                });
+                
+                if (successHistory.length > 20) successHistory.shift();
+                
+                successChart.data.labels = successHistory.map(h => h.time);
+                successChart.data.datasets[0].data = successHistory.map(h => h.rate);
+                successChart.update();
+            }
+
+            // Update source chart
+            if (learningData.scrapingStrategies) {
+                const strategies = learningData.scrapingStrategies;
+                sourceChart.data.datasets[0].data = [
+                    strategies.find(s => s.method === 'chicagorealtor.com')?.timesUsed || 0,
+                    strategies.find(s => s.method === 'zillow')?.timesUsed || 0,
+                    strategies.find(s => s.method === 'realtor.com')?.timesUsed || 0,
+                    strategies.find(s => s.method === 'linkedin')?.timesUsed || 0,
+                    strategies.find(s => s.method === 'redfin')?.timesUsed || 0
+                ];
+                sourceChart.update();
+            }
+        }
+
+        // WebSocket connection
+        const ws = new WebSocket('ws://localhost:5000');
+        
+        ws.onopen = () => {
+            console.log('Connected to orchestrator');
+        };
+
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            
+            if (message.type === 'activity' && message.activity) {
+                // Add to activity log
+                activityLog.unshift({
+                    time: new Date().toLocaleTimeString(),
+                    message: message.activity,
+                    details: message.details
+                });
+                
+                if (activityLog.length > 10) activityLog.pop();
+                
+                // Update activity display
+                document.getElementById('currentActivity').innerHTML = activityLog.map(item => {
+                    const isWarning = item.message.includes('⚠️') || item.message.includes('failed');
+                    const isError = item.message.includes('❌');
+                    const className = isError ? 'error' : isWarning ? 'warning' : '';
+                    
+                    let detailsHtml = '';
+                    if (item.details && Object.keys(item.details).length > 0) {
+                        detailsHtml = '<div style="margin-top: 5px; opacity: 0.8; font-size: 0.85rem;">' +
+                            Object.entries(item.details)
+                                .map(([k, v]) => `→ ${k}: ${v}`)
+                                .join('<br>') +
+                            '</div>';
+                    }
+                    
+                    return `
+                        <div class="activity-item ${className}">
+                            <div class="activity-time">${item.time}</div>
+                            ${item.message}
+                            ${detailsHtml}
+                        </div>
+                    `;
+                }).join('');
+                
+                // Update metrics if included
+                if (message.metrics) {
+                    learningData.metrics = message.metrics;
+                    updateUI();
+                }
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        // Control functions
+        async function pauseSystem() {
+            try {
+                await fetch('/api/pause', { method: 'POST' });
+                alert('System paused');
+            } catch (error) {
+                alert('Failed to pause system: ' + error.message);
+            }
+        }
+
+        async function resumeSystem() {
+            try {
+                await fetch('/api/resume', { method: 'POST' });
+                alert('System resumed');
+            } catch (error) {
+                alert('Failed to resume system: ' + error.message);
+            }
+        }
+
+        // Proxy Management Functions
+        const API_URL = 'http://localhost:5000'; // Orchestrator API
+
+        async function loadProxyConfig() {
+            try {
+                const response = await fetch(`${API_URL}/proxies/config`);
+                const data = await response.json();
+                if (data.success) {
+                    updateProxyUI(data.config);
+                }
+            } catch (error) {
+                console.error('Failed to load proxy config:', error);
+            }
+        }
+
+        function updateProxyUI(config) {
+            // Update toggle switch
+            document.getElementById('proxyToggle').checked = config.enabled;
+            
+            // Update stats
+            const stats = config.proxy_stats || {total: 0, working: 0, failed: 0};
+            document.getElementById('proxyTotal').textContent = stats.total;
+            document.getElementById('proxyWorking').textContent = stats.working;
+            document.getElementById('proxyFailed').textContent = stats.failed;
+            
+            // Render proxy list
+            renderProxyList(config.proxies || []);
+        }
+
+        function renderProxyList(proxies) {
+            const proxyList = document.getElementById('proxyList');
+            
+            if (proxies.length === 0) {
+                proxyList.innerHTML = '<div style="text-align:center;opacity:0.5;padding:20px;">No proxies configured</div>';
+                return;
+            }
+            
+            proxyList.innerHTML = proxies.map(proxy => {
+                const statusClass = proxy.status === 'working' ? 'working' : 
+                                  proxy.status === 'failed' ? 'failed' : '';
+                const statusText = proxy.status ? ` (${proxy.status})` : '';
+                
+                return `
+                    <div class="proxy-item ${statusClass}">
+                        <span>${proxy.url}${statusText}</span>
+                        <button class="btn-remove" onclick="removeProxy('${proxy.url}')">Remove</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function toggleProxies() {
+            const enabled = document.getElementById('proxyToggle').checked;
+            
+            try {
+                const response = await fetch(`${API_URL}/proxies/toggle`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({enabled})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log('Proxies toggled:', data);
+                    // Config will be reloaded by periodic refresh
+                } else {
+                    alert('Failed to toggle proxies: ' + data.message);
+                    // Revert toggle
+                    document.getElementById('proxyToggle').checked = !enabled;
+                }
+            } catch (error) {
+                console.error('Toggle proxies error:', error);
+                alert('Failed to toggle proxies: ' + error.message);
+                // Revert toggle
+                document.getElementById('proxyToggle').checked = !enabled;
+            }
+        }
+
+        async function addProxy() {
+            const proxyInput = document.getElementById('proxyInput');
+            const proxyUrl = proxyInput.value.trim();
+            
+            if (!proxyUrl) {
+                alert('Please enter a proxy URL');
+                return;
+            }
+            
+            // Validate format: protocol://[user:pass@]host:port
+            const proxyRegex = /^(socks5|socks4|http):\/\/([^:@]+:[^:@]+@)?[^:]+:\d+$/;
+            if (!proxyRegex.test(proxyUrl)) {
+                alert('Invalid proxy format. Use: socks5://user:pass@host:port or http://host:port');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/proxies/add`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({proxy_url: proxyUrl})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    proxyInput.value = ''; // Clear input
+                    loadProxyConfig(); // Refresh list
+                } else {
+                    alert('Failed to add proxy: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Add proxy error:', error);
+                alert('Failed to add proxy: ' + error.message);
+            }
+        }
+
+        async function removeProxy(proxyUrl) {
+            if (!confirm(`Remove proxy ${proxyUrl}?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/proxies/remove`, {
+                    method: 'DELETE',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({proxy_url: proxyUrl})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    loadProxyConfig(); // Refresh list
+                } else {
+                    alert('Failed to remove proxy: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Remove proxy error:', error);
+                alert('Failed to remove proxy: ' + error.message);
+            }
+        }
+
+        async function testProxy(proxyUrl) {
+            try {
+                const response = await fetch(`${API_URL}/proxies/test`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({proxy_url: proxyUrl})
+                });
+                
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Test proxy error:', error);
+                return {success: false, working: false, error: error.message};
+            }
+        }
+
+        async function testAllProxies() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+            
+            try {
+                const response = await fetch(`${API_URL}/proxies/status`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update UI with test results
+                    updateProxyUI(data.config);
+                    alert(`Proxy testing complete:\n${data.proxy_stats.working} working\n${data.proxy_stats.failed} failed`);
+                } else {
+                    alert('Failed to test proxies: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Test all proxies error:', error);
+                alert('Failed to test proxies: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Test All';
+            }
+        }
+
+        // Initialize
+        initCharts();
+        fetchLearningData();
+        setInterval(fetchLearningData, 5000); // Update every 5 seconds
+        setInterval(fetchLeadsBySource, 5000); // Update source chart from Airtable every 5 seconds
+        fetchLeadsBySource(); // Initial load
+        
+        // Load proxy config on page load
+        loadProxyConfig();
+        // Refresh proxy config every 10 seconds
+        setInterval(loadProxyConfig, 10000);
+    </script>
+</body>
+</html>
